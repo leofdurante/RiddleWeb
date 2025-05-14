@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   Container,
@@ -9,54 +9,51 @@ import {
   Text,
   Badge,
   Select,
+  Spinner,
+  Center,
+  Button,
 } from '@chakra-ui/react'
 import { SearchIcon } from '@chakra-ui/icons'
-
-interface Riddle {
-  id: number
-  title: string
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  category: 'Logic' | 'Word Play' | 'Math'
-  description: string
-}
-
-// Temporary mock data
-const mockRiddles: Riddle[] = [
-  {
-    id: 1,
-    title: 'The Time Traveler',
-    difficulty: 'Hard',
-    category: 'Logic',
-    description: 'I am taken from a mine and shut up in a wooden case...',
-  },
-  {
-    id: 2,
-    title: 'The Silent Guardian',
-    difficulty: 'Medium',
-    category: 'Word Play',
-    description: 'What has keys, but no locks; space, but no room...',
-  },
-  {
-    id: 3,
-    title: 'The Math Wizard',
-    difficulty: 'Easy',
-    category: 'Math',
-    description: 'I am a number that is equal to the sum of my digits...',
-  },
-]
+import { Link as RouterLink } from 'react-router-dom'
+import { Riddle, puzzleService } from '../services/puzzleService'
 
 const RiddleList = () => {
+  const [riddles, setRiddles] = useState<Riddle[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [difficulty, setDifficulty] = useState<string>('all')
   const [category, setCategory] = useState<string>('all')
+  const [isLoading, setIsLoading] = useState(true)
 
-  const filteredRiddles = mockRiddles.filter((riddle) => {
-    const matchesSearch = riddle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         riddle.description.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const loadRiddles = async () => {
+      try {
+        // For now, we'll use mock riddles until we have a proper API
+        const mockRiddles = puzzleService.getMockRiddles()
+        setRiddles(mockRiddles)
+      } catch (error) {
+        console.error('Error loading riddles:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadRiddles()
+  }, [])
+
+  const filteredRiddles = riddles.filter((riddle) => {
+    const matchesSearch = riddle.riddle.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesDifficulty = difficulty === 'all' || riddle.difficulty === difficulty
     const matchesCategory = category === 'all' || riddle.category === category
     return matchesSearch && matchesDifficulty && matchesCategory
   })
+
+  if (isLoading) {
+    return (
+      <Center h="50vh">
+        <Spinner size="xl" color="purple.500" />
+      </Center>
+    )
+  }
 
   return (
     <Container maxW="container.xl">
@@ -89,9 +86,9 @@ const RiddleList = () => {
             onChange={(e) => setDifficulty(e.target.value)}
           >
             <option value="all">All Difficulties</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
           </Select>
           
           <Select
@@ -100,9 +97,9 @@ const RiddleList = () => {
             onChange={(e) => setCategory(e.target.value)}
           >
             <option value="all">All Categories</option>
-            <option value="Logic">Logic</option>
-            <option value="Word Play">Word Play</option>
-            <option value="Math">Math</option>
+            <option value="wordplay">Word Play</option>
+            <option value="logic">Logic</option>
+            <option value="objects">Objects</option>
           </Select>
         </Box>
 
@@ -117,11 +114,12 @@ const RiddleList = () => {
               shadow="md"
               _hover={{ transform: 'translateY(-2px)', shadow: 'lg' }}
               transition="all 0.2s"
+              as={RouterLink}
+              to={`/riddles/${riddle.id}`}
             >
               <Stack gap={3}>
-                <Heading size="md">{riddle.title}</Heading>
                 <Text color="gray.600" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {riddle.description}
+                  {riddle.riddle}
                 </Text>
                 <Box display="flex" gap={2}>
                   <Badge colorScheme="purple">{riddle.difficulty}</Badge>

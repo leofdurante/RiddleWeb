@@ -9,7 +9,6 @@ function App() {
   return (
     <Router>
       <div>
-        <h1>Test: If you see this, the app is rendering!</h1>
         <Navbar />
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
           <Routes>
