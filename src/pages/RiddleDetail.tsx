@@ -24,6 +24,7 @@ import { AIChat } from '../components/AIChat'
 import { DrawingCanvas } from '../components/DrawingCanvas'
 import { Calculator } from '../components/Calculator'
 import { Riddle, puzzleService } from '../services/puzzleService'
+import { aiService } from '../services/aiService'
 
 const RiddleDetail = () => {
   const { id } = useParams()
@@ -96,7 +97,7 @@ const RiddleDetail = () => {
     if (!riddle) return
 
     try {
-      const hint = await puzzleService.getRiddleHint(riddle.riddle)
+      const hint = await aiService.getRiddleHint(riddle.riddle)
       setShowHints(true)
       setHintIndex(prev => prev + 1)
       toast({
@@ -181,7 +182,7 @@ const RiddleDetail = () => {
 
           <TabPanels>
             <TabPanel>
-              <AIChat />
+              {riddle && <AIChat riddle={riddle} />}
             </TabPanel>
             <TabPanel>
               <DrawingCanvas />

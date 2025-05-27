@@ -12,8 +12,13 @@ import {
   Divider,
 } from '@chakra-ui/react';
 import { ChatMessage, aiService } from '../services/aiService';
+import { Riddle } from '../services/puzzleService';
 
-export const AIChat: React.FC = () => {
+interface AIChatProps {
+  riddle: Riddle;
+}
+
+export const AIChat: React.FC<AIChatProps> = ({ riddle }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
@@ -40,7 +45,7 @@ export const AIChat: React.FC = () => {
       const response = await aiService.chatWithAI([
         {
           role: 'system',
-          content: 'You are a helpful riddle-solving assistant. Your goal is to help users solve riddles by providing subtle hints, explaining concepts, and guiding their thinking without giving away the answer. Be encouraging and creative in your approach.'
+          content: `You are a helpful riddle-solving assistant. Help the user with this riddle.\nTitle: ${riddle.title}\nRiddle: ${riddle.riddle}`
         },
         ...messages,
         newMessage

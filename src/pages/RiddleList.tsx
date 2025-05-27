@@ -118,6 +118,7 @@ const RiddleList = () => {
               to={`/riddles/${riddle.id}`}
             >
               <Stack gap={3}>
+                <Heading size="md" color="purple.600">{riddle.title}</Heading>
                 <Text color="gray.600" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {riddle.riddle}
                 </Text>
