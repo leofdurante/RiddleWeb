@@ -14,7 +14,6 @@ import {
   Select,
   Spinner,
   Center,
-  Button,
   useColorModeValue,
 } from '@chakra-ui/react'
 // Import icons from Chakra UI
@@ -99,9 +98,15 @@ const RiddleList = () => {
           <Heading>Riddles</Heading>
           
           {/* Filters Section */}
-          <Box display="flex" gap={4} flexWrap="wrap">
+          <Box 
+            display="flex" 
+            gap={4} 
+            flexWrap="wrap"
+            flexDirection={{ base: 'column', md: 'row' }}
+            alignItems={{ base: 'stretch', md: 'center' }}
+          >
             {/* Search Input */}
-            <Box position="relative" maxW="300px">
+            <Box position="relative" w={{ base: '100%', md: '300px' }}>
               {/* Search Icon */}
               <Box
                 position="absolute"
@@ -118,12 +123,13 @@ const RiddleList = () => {
                 placeholder="Search riddles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                w="100%"
               />
             </Box>
             
             {/* Difficulty Filter */}
             <Select
-              maxW="200px"
+              w={{ base: '100%', md: '200px' }}
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
             >
@@ -135,7 +141,7 @@ const RiddleList = () => {
             
             {/* Category Filter */}
             <Select
-              maxW="200px"
+              w={{ base: '100%', md: '200px' }}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
@@ -147,31 +153,39 @@ const RiddleList = () => {
           </Box>
 
           {/* Riddle Grid */}
-          {/* Display filtered riddles in a responsive grid */}
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
+          <SimpleGrid 
+            columns={{ base: 1, sm: 2, lg: 3 }} 
+            gap={6}
+            spacing={6}
+            px={{ base: 2, md: 4 }}
+          >
             {filteredRiddles.map((riddle) => (
-              // Each riddle as a clickable Box linking to the detail page
               <Box
                 key={riddle.id}
-                p={6}
-                bg={cardBg} // Dynamic background based on color mode
+                p={{ base: 4, md: 6 }}
+                bg={cardBg}
                 rounded="lg"
                 shadow="md"
-                _hover={{ transform: 'translateY(-2px)', shadow: 'lg' }} // Hover effect
+                _hover={{ transform: 'translateY(-2px)', shadow: 'lg' }}
                 transition="all 0.2s"
                 as={RouterLink}
                 to={`/riddles/${riddle.id}`}
+                display="flex"
+                flexDirection="column"
+                height="100%"
               >
-                {/* Stack for riddle content within the card */}
-                <Stack gap={3}>
-                  {/* Riddle Title */}
-                  <Heading size="md" color="purple.600">{riddle.title}</Heading>
-                  {/* Riddle Text with truncated display */}
-                  <Text color={useColorModeValue('gray.600', 'gray.300')} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                <Stack gap={3} flex="1">
+                  <Heading size="md" color="purple.600" noOfLines={2}>
+                    {riddle.title}
+                  </Heading>
+                  <Text 
+                    color={useColorModeValue('gray.600', 'gray.300')} 
+                    noOfLines={3}
+                    flex="1"
+                  >
                     {riddle.riddle}
                   </Text>
-                  {/* Badges for Difficulty and Category */}
-                  <Box display="flex" gap={2}>
+                  <Box display="flex" gap={2} flexWrap="wrap">
                     <Badge colorScheme="purple">{riddle.difficulty}</Badge>
                     <Badge colorScheme="blue">{riddle.category}</Badge>
                   </Box>

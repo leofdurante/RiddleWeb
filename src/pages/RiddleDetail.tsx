@@ -11,28 +11,21 @@ import {
   Text,
   VStack,
   Button,
-  Textarea,
   useToast,
   Badge,
-  Collapse,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  Spinner,
   Center,
-  Progress,
+  Spinner,
   useColorModeValue,
+  HStack,
 } from '@chakra-ui/react'
-// Import custom components and services
-import { AIChat } from '../components/AIChat'
-import { DrawingCanvas } from '../components/DrawingCanvas'
-import { Calculator } from '../components/Calculator'
 // Import Riddle interface and puzzleService for data fetching
 import { Riddle, puzzleService } from '../services/puzzleService'
 // Import aiService for AI interactions
 import { aiService } from '../services/aiService'
+// Import the AIChat component
+import { AIChat } from '../components/AIChat'
+import { DrawingCanvas } from '../components/DrawingCanvas'
+import { Calculator } from '../components/Calculator'
 
 // RiddleDetail component to display a single riddle and related tools
 const RiddleDetail = () => {
@@ -44,8 +37,6 @@ const RiddleDetail = () => {
   const [riddle, setRiddle] = useState<Riddle | null>(null)
   // State to manage the visibility of hints section
   const [showHints, setShowHints] = useState(false)
-  // State to track the index of the hint displayed (though we only show one now)
-  const [hintIndex, setHintIndex] = useState(0)
   // State to indicate loading status
   const [isLoading, setIsLoading] = useState(true)
   // State to store the fetched hints (currently limited to one)
@@ -105,22 +96,36 @@ const RiddleDetail = () => {
     if (!riddle || hints.length > 0) return
 
     try {
+      // Check if the AI service is initialized
+      if (!(aiService as any).openai) {
+        toast({
+          title: 'AI Service not available',
+          description: 'The AI hint service is not configured. Please ensure the necessary API key is set.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+
       // Fetch a hint from the AI service, passing the riddle and the number of hints already used
       const hint = await aiService.getRiddleHint(riddle, hints.length)
       // Show the hints section
       setShowHints(true)
-      // Increment hint index (though not directly used to display multiple hints now)
-      setHintIndex(prev => prev + 1)
       // Add the fetched hint to the hints array
       setHints(prev => [...prev, hint])
     } catch (error) {
       // Log any errors during hint fetching and show an error toast
       console.error('Error fetching hint:', error)
+      let errorMessage = 'Failed to get hint.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       toast({
         title: 'Error',
-        description: 'Failed to get hint.',
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       })
     }
@@ -142,83 +147,73 @@ const RiddleDetail = () => {
   }
 
   return (
-    // Main container with dynamic background, styling, and shadow
-    <Container maxW="container.xl" bg={containerBg} borderRadius="lg" p={6} boxShadow="md">
-      {/* Vertical stack for content with spacing */}
+    <Container 
+      maxW="container.xl" 
+      bg={containerBg} 
+      borderRadius="lg" 
+      p={{ base: 4, md: 6 }} 
+      boxShadow="md"
+    >
       <VStack spacing={8} align="stretch">
-        {/* Box for riddle information */}
         <Box>
-          {/* Riddle Title */}
-          <Heading mb={2}>{riddle.title}</Heading>
-          {/* Box for difficulty and category badges */}
-          <Box display="flex" gap={2} mb={4}>
-            {/* Difficulty Badge */}
+          <Heading 
+            mb={2} 
+            fontSize={{ base: 'xl', md: '2xl' }}
+            noOfLines={2}
+          >
+            {riddle.title}
+          </Heading>
+          <Box 
+            display="flex" 
+            gap={2} 
+            mb={4}
+            flexWrap="wrap"
+          >
             <Badge colorScheme="purple">{riddle.difficulty}</Badge>
-            {/* Category Badge */}
             <Badge colorScheme="blue">{riddle.category}</Badge>
           </Box>
-          {/* Riddle Text */}
-          <Text fontSize="lg" mb={6}>
+          <Text 
+            fontSize={{ base: 'md', md: 'lg' }} 
+            mb={6}
+            whiteSpace="pre-wrap"
+          >
             {riddle.riddle}
           </Text>
         </Box>
 
-        {/* Box for interactive elements like the hint button */}
         <Box>
-          {/* Button to get a hint, disabled after one use */}
           <Button
             variant="outline"
             onClick={handleGetHint}
-            disabled={hints.length > 0} // Disable button after one hint
+            disabled={hints.length > 0}
+            size="md"
+            width={{ base: '100%', md: 'auto' }}
           >
             Get Hint
           </Button>
         </Box>
 
-        {/* Collapsible section to display hints */}
-        <Collapse in={showHints}>
-          {/* Box for hints with dynamic background */}
-          <Box p={4} bg={hintBg} rounded="md">
-            <Heading size="sm" mb={2}>Hints:</Heading>
-            {/* Display fetched hints or a message if none yet */}
-            {hints.length > 0 ? (
-              // Map over the hints array to display each hint
-              hints.map((hint, idx) => (
-                <Text key={idx} mb={1}>{hint}</Text>
-              ))
-            ) : (
-              // Message displayed when no hints are fetched yet
-              <Text>Use the AI Assistant tab to get more hints!</Text>
-            )}
+        {showHints && hints.length > 0 && (
+          <Box
+            p={4}
+            bg={hintBg}
+            borderRadius="md"
+            mt={4}
+          >
+            <Text fontSize={{ base: 'sm', md: 'md' }}>
+              {hints[0]}
+            </Text>
           </Box>
-        </Collapse>
+        )}
 
-        {/* Tabs for different tools (AI Assistant, Drawing Board, Calculator) */}
-        <Tabs variant="enclosed" colorScheme="purple">
-          {/* List of tabs */}
-          <TabList>
-            <Tab>AI Assistant</Tab>
-            <Tab>Drawing Board</Tab>
-            <Tab>Calculator</Tab>
-          </TabList>
+        {/* Add the AIChat component here */}
+        {riddle && <AIChat riddle={riddle} />}
 
-          {/* Panels for tab content */}
-          <TabPanels>
-            {/* AI Assistant tab content */}
-            <TabPanel>
-              {/* Render AIChat component, passing the current riddle */}
-              {riddle && <AIChat riddle={riddle} />}
-            </TabPanel>
-            {/* Drawing Board tab content */}
-            <TabPanel>
-              <DrawingCanvas />
-            </TabPanel>
-            {/* Calculator tab content */}
-            <TabPanel>
-              <Calculator />
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+        {/* Add DrawingCanvas and Calculator components */}
+        <HStack spacing={8} align="start">
+          <DrawingCanvas />
+          <Calculator />
+        </HStack>
       </VStack>
     </Container>
   )

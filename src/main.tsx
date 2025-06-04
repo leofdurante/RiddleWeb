@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ChakraProvider, extendTheme, ColorModeScript, SystemStyleFunction, StyleFunctionProps } from '@chakra-ui/react'
+import { ChakraProvider, extendTheme, ColorModeScript, StyleFunctionProps } from '@chakra-ui/react'
 import './index.css'
 import App from './App.tsx'
 

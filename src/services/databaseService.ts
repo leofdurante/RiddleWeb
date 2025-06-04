@@ -1,7 +1,6 @@
 // src/services/databaseService.ts
 
 // Import necessary Firebase Firestore functions
-import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 // Import the Riddle interface
 import { Riddle } from './puzzleService';
