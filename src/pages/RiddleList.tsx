@@ -44,13 +44,19 @@ const RiddleList = () => {
     // Async function to fetch riddles
     const loadRiddles = async () => {
       try {
+        console.log('Loading riddles...')
         // Fetch all riddles from the database service
         const fetchedRiddles = await puzzleService.getAllRiddles()
+        console.log('Fetched riddles:', fetchedRiddles)
         // Update the riddles state with fetched data
         setRiddles(fetchedRiddles)
       } catch (error) {
         // Log any errors during riddle loading
         console.error('Error loading riddles:', error)
+        // Fallback to mock data if Firestore fails
+        console.log('Falling back to mock data...')
+        const { mockRiddles } = await import('../services/puzzleService')
+        setRiddles(mockRiddles)
       } finally {
         // Set loading state to false after fetching ( चाहे success हो या error )
         setIsLoading(false)
@@ -159,22 +165,25 @@ const RiddleList = () => {
             spacing={6}
             px={{ base: 2, md: 4 }}
           >
-            {filteredRiddles.map((riddle) => (
-              <Box
-                key={riddle.id}
-                p={{ base: 4, md: 6 }}
-                bg={cardBg}
-                rounded="lg"
-                shadow="md"
-                _hover={{ transform: 'translateY(-2px)', shadow: 'lg' }}
-                transition="all 0.2s"
-                as={RouterLink}
-                to={`/riddles/${riddle.id}`}
-                display="flex"
-                flexDirection="column"
-                height="100%"
-              >
-                <Stack gap={3} flex="1">
+            {filteredRiddles.map((riddle) => {
+              console.log('Rendering riddle:', riddle.title, 'with ID:', riddle.id);
+              return (
+                <Box
+                  key={riddle.id}
+                  p={{ base: 4, md: 6 }}
+                  bg={cardBg}
+                  rounded="lg"
+                  shadow="md"
+                  _hover={{ transform: 'translateY(-2px)', shadow: 'lg' }}
+                  transition="all 0.2s"
+                  as={RouterLink}
+                  to={`/riddles/${riddle.id}`}
+                  display="flex"
+                  flexDirection="column"
+                  height="100%"
+                  cursor="pointer"
+                >
+                  <Stack gap={3} flex="1">
                   <Heading size="md" color="purple.600" noOfLines={2}>
                     {riddle.title}
                   </Heading>
@@ -190,8 +199,9 @@ const RiddleList = () => {
                     <Badge colorScheme="blue">{riddle.category}</Badge>
                   </Box>
                 </Stack>
-              </Box>
-            ))}
+                </Box>
+              );
+            })}
           </SimpleGrid>
         </Stack>
       </Box>

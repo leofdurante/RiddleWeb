@@ -18,7 +18,7 @@ export interface Riddle {
 }
 
 // Array containing mock riddle data
-const mockRiddles: Riddle[] = [
+export const mockRiddles: Riddle[] = [
   {
     id: '1',
     title: 'The Missing Letter',
@@ -127,21 +127,23 @@ const mockRiddles: Riddle[] = [
   }
 ];
 
-// Initialize the database with mock data
+// Initialize the database connection (no need to reinitialize since riddles already exist)
 export const initializeDatabase = async () => {
   try {
-    // Connect to the database - Not needed for Firestore, Firebase is initialized globally
-    // await databaseService.connect(); // Removed
-    // Get all existing riddles
-    const riddles = await databaseService.getAllRiddles();
-    // If no riddles are found, initialize with mock data
-    if (riddles.length === 0) {
-      await databaseService.initializeWithMockData(mockRiddles);
-      console.log('Database initialized with mock data');
+    console.log('Connecting to existing Firestore database...');
+    
+    // Test Firestore connection
+    const { testFirestoreConnection } = await import('./databaseService');
+    const isConnected = await testFirestoreConnection();
+    if (!isConnected) {
+      console.error('Firestore connection failed');
+      return;
     }
+    
+    console.log('Successfully connected to existing Firestore database');
   } catch (error) {
-    // Log any errors during database initialization
-    console.error('Failed to initialize database:', error);
+    // Log any errors during database connection
+    console.error('Failed to connect to database:', error);
   }
 };
 

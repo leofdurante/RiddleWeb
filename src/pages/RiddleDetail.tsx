@@ -41,6 +41,9 @@ const RiddleDetail = () => {
   const [isLoading, setIsLoading] = useState(true)
   // State to store the fetched hints (currently limited to one)
   const [hints, setHints] = useState<string[]>([])
+  // State to control visibility of DrawingCanvas and Calculator
+  const [showDrawingCanvas, setShowDrawingCanvas] = useState(false)
+  const [showCalculator, setShowCalculator] = useState(false)
   // Hook to display toast notifications
   const toast = useToast()
 
@@ -54,13 +57,16 @@ const RiddleDetail = () => {
     // Async function to fetch the riddle by ID
     const loadRiddle = async () => {
       try {
+        console.log('Loading riddle with ID:', id);
         // Fetch the riddle from the database service using the ID from parameters
         const foundRiddle = await puzzleService.getRiddle(id as string)
+        console.log('Found riddle:', foundRiddle);
         if (foundRiddle) {
           // Set the riddle state if found
           setRiddle(foundRiddle)
         } else {
           // Show an error toast and navigate to the riddles list if not found
+          console.log('Riddle not found, navigating back to list');
           toast({
             title: 'Riddle not found',
             description: 'The riddle you are looking for does not exist.',
@@ -142,8 +148,8 @@ const RiddleDetail = () => {
 
   // Render the riddle detail page once loaded
   if (!riddle) {
-    // Return null or a message if the riddle wasn't found (handled by toast/navigate)
-    return null
+    // Return null if the riddle wasn't found (handled by toast/navigate)
+    return null;
   }
 
   return (
@@ -209,11 +215,35 @@ const RiddleDetail = () => {
         {/* Add the AIChat component here */}
         {riddle && <AIChat riddle={riddle} />}
 
-        {/* Add DrawingCanvas and Calculator components */}
-        <HStack spacing={8} align="start">
-          <DrawingCanvas />
-          <Calculator />
-        </HStack>
+        {/* Toggle buttons for DrawingCanvas and Calculator */}
+        <Box textAlign="center" mt={4}>
+          <HStack spacing={4} justify="center">
+            <Button
+              onClick={() => setShowDrawingCanvas(!showDrawingCanvas)}
+              colorScheme="blue"
+              variant={showDrawingCanvas ? "solid" : "outline"}
+              leftIcon={<Box as="span" fontSize="lg">🎨</Box>}
+            >
+              {showDrawingCanvas ? "Hide" : "Show"} Drawing Canvas
+            </Button>
+            <Button
+              onClick={() => setShowCalculator(!showCalculator)}
+              colorScheme="green"
+              variant={showCalculator ? "solid" : "outline"}
+              leftIcon={<Box as="span" fontSize="lg">🧮</Box>}
+            >
+              {showCalculator ? "Hide" : "Show"} Calculator
+            </Button>
+          </HStack>
+        </Box>
+
+        {/* Conditionally show DrawingCanvas and Calculator */}
+        {(showDrawingCanvas || showCalculator) && (
+          <HStack spacing={8} align="start" mt={6}>
+            {showDrawingCanvas && <DrawingCanvas />}
+            {showCalculator && <Calculator />}
+          </HStack>
+        )}
       </VStack>
     </Container>
   )

@@ -20,6 +20,12 @@ function App() {
 
   // useEffect hook to run database initialization once on component mount
   useEffect(() => {
+    // Test environment variables
+    console.log('Environment variables test:');
+    console.log('VITE_OPENAI_API_KEY exists:', !!import.meta.env.VITE_OPENAI_API_KEY);
+    console.log('VITE_OPENAI_API_KEY length:', import.meta.env.VITE_OPENAI_API_KEY?.length || 0);
+    console.log('All env vars:', import.meta.env);
+    
     // Initialize the IndexedDB database and populate with mock data if empty
     initializeDatabase()
       .then(() => setIsDatabaseInitialized(true)) // Set state to true on successful initialization

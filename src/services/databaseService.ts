@@ -1,7 +1,7 @@
 // src/services/databaseService.ts
 
 // Import necessary Firebase Firestore functions
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 // Import the Riddle interface
 import { Riddle } from './puzzleService';
 // Import Firebase config
@@ -13,35 +13,82 @@ const db = getFirestore(firebaseApp);
 // Collection name for riddles in Firestore
 const RIDDLES_COLLECTION = 'riddles';
 
+// Test function to check Firestore connection
+export const testFirestoreConnection = async () => {
+  try {
+    console.log('Testing Firestore connection...');
+    const testCollection = collection(db, 'test');
+    const testSnapshot = await getDocs(testCollection);
+    console.log('Firestore connection successful, test collection size:', testSnapshot.size);
+    return true;
+  } catch (error) {
+    console.error('Firestore connection failed:', error);
+    return false;
+  }
+};
+
+// Function to clear all riddles from the database
+export const clearAllRiddles = async () => {
+  try {
+    console.log('Clearing all riddles from database...');
+    const querySnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
+    const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+    console.log('All riddles cleared from database');
+  } catch (error) {
+    console.error('Error clearing riddles:', error);
+    throw error;
+  }
+};
+
 // Database service class for Firebase Firestore operations
 class DatabaseService {
 
   // Get a single riddle by ID
   async getRiddle(id: string): Promise<Riddle | null> {
-    const docRef = doc(db, RIDDLES_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
+    try {
+      console.log('Getting riddle with ID:', id);
+      const docRef = doc(db, RIDDLES_COLLECTION, id);
+      const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      // Firestore document data might not exactly match Riddle interface,
-      // so we cast it and ensure the id field is correct.
-      const data = docSnap.data() as Riddle;
-      return { ...data, id: docSnap.id };
-    } else {
-      return null;
+      if (docSnap.exists()) {
+        // Firestore document data might not exactly match Riddle interface,
+        // so we cast it and ensure the id field is correct.
+        const data = docSnap.data() as Riddle;
+        const riddle = { ...data, id: docSnap.id };
+        console.log('Riddle found:', riddle);
+        return riddle;
+      } else {
+        console.log('Riddle document does not exist');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting riddle:', error);
+      throw error;
     }
   }
 
   // Get all riddles from the Firestore collection
   async getAllRiddles(): Promise<Riddle[]> {
-    const querySnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
-    const riddles: Riddle[] = [];
-    querySnapshot.forEach((doc) => {
-      // Add each document's data to the riddles array
-      // Include the document ID as the riddle ID
-      const data = doc.data() as Riddle;
-      riddles.push({ ...data, id: doc.id });
-    });
-    return riddles;
+    try {
+      console.log('Getting all riddles from Firestore...');
+      const querySnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
+      console.log('Query snapshot size:', querySnapshot.size);
+      const riddles: Riddle[] = [];
+      querySnapshot.forEach((doc) => {
+        // Add each document's data to the riddles array
+        // Include the document ID as the riddle ID
+        const data = doc.data() as Riddle;
+        const riddle = { ...data, id: doc.id };
+        console.log('Document ID:', doc.id, 'Riddle title:', riddle.title);
+        riddles.push(riddle);
+      });
+      console.log('Processed riddles:', riddles);
+      return riddles;
+    } catch (error) {
+      console.error('Error getting riddles from Firestore:', error);
+      throw error;
+    }
   }
 
   // Get a random riddle (less efficient with large datasets, but works for mock data)
@@ -70,65 +117,29 @@ class DatabaseService {
     await deleteDoc(docRef);
   }
 
-  // Initialize the database with a list of riddles if the collection is empty or add new ones if they don't exist
+  // Initialize the database with a list of riddles if the collection is empty
   async initializeWithMockData(riddles: Riddle[]): Promise<void> {
     console.log('Checking for existing riddles...');
     const existingRiddlesSnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
-    const existingRiddleIds = new Set(existingRiddlesSnapshot.docs.map(doc => doc.id));
-
-    let newRiddlesAdded = 0;
-
-    for (const riddle of riddles) {
-      if (!existingRiddleIds.has(riddle.id)) {
-        console.log(`Adding riddle with ID: ${riddle.id}`);
-        // We add riddles without the 'id' field here, as Firestore generates it.
-        // However, since our mock data has IDs and we want to use them as document IDs,
-        // we will set the document with the specific ID.
-        // Note: This requires potentially different Firestore rules than addDoc
-        // For simplicity with mock data, let's adjust addRiddle to handle this or use setDoc.
-        // A more robust approach for production might involve server-side logic for initialization.
-
-        // For now, let's use addDoc and accept Firestore-generated IDs, but only add if title+riddle combination is unique (less ideal)
-        // A better approach is to use setDoc with a known ID, but requires different setup/rules.
-
-        // Let's revert to the previous addDoc logic but ensure we only add if the collection is empty.
-        // The previous check `if (existingRiddles.length === 0)` was more appropriate for simple initialization.
-
-        // Let's restore the simple initialization check:
-         const initialCheckSnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
-         if (initialCheckSnapshot.empty) {
-             console.log('Firestore collection is empty, initializing with all mock data.');
-             for (const mockRiddle of riddles) {
-                 const { id, ...riddleWithoutId } = mockRiddle;
-                 // Use setDoc if we want to preserve mock riddle IDs, but requires rule changes.
-                 // Let's stick to addDoc and allow Firestore to generate IDs for simplicity.
-                 await addDoc(collection(db, RIDDLES_COLLECTION), riddleWithoutId);
-             }
-             console.log('Mock data initialization complete.');
-         } else {
-             console.log('Firestore collection already contains data, skipping initialization.');
-         }
-         return; // Exit after initial check
-      }
-    }
-
-    if (newRiddlesAdded > 0) {
-        console.log(`Added ${newRiddlesAdded} new riddles.`);
-    } else {
-        console.log('No new riddles to add.');
-    }
-
-    // Revert to the simpler initialization logic: only add mock data if collection is completely empty.
-    const finalCheckSnapshot = await getDocs(collection(db, RIDDLES_COLLECTION));
-    if (finalCheckSnapshot.empty) {
-        console.log('Firestore collection is empty after checks, initializing with all mock data.');
-        for (const mockRiddle of riddles) {
-            const { id, ...riddleWithoutId } = mockRiddle;
-            await addDoc(collection(db, RIDDLES_COLLECTION), riddleWithoutId);
+    
+    // Only initialize if the collection is completely empty
+    if (existingRiddlesSnapshot.empty) {
+      console.log('Firestore collection is empty, initializing with mock data...');
+      
+      for (const mockRiddle of riddles) {
+        try {
+          // Use setDoc to preserve the original mock ID
+          const { id, ...riddleWithoutId } = mockRiddle;
+          await setDoc(doc(db, RIDDLES_COLLECTION, id), riddleWithoutId);
+          console.log(`Added riddle: ${mockRiddle.title} with ID: ${id}`);
+        } catch (error) {
+          console.error(`Failed to add riddle ${mockRiddle.title}:`, error);
         }
-        console.log('Final mock data initialization complete.');
+      }
+      
+      console.log('Mock data initialization complete.');
     } else {
-        console.log('Firestore collection still contains data, no full initialization needed.');
+      console.log('Firestore collection already contains data, skipping initialization.');
     }
   }
 }
