@@ -55,6 +55,7 @@ export const AIChat = ({ riddle }: AIChatProps) => {
   const inputColor = useColorModeValue('gray.800', 'white');
   // Determine placeholder text color for the input field based on color mode
   const inputPlaceholderColor = useColorModeValue('gray.500', 'gray.400');
+  const isChatConfigured = aiService.isConfigured();
 
   // Function to scroll the chat to the bottom
   const scrollToBottom = () => {
@@ -71,6 +72,16 @@ export const AIChat = ({ riddle }: AIChatProps) => {
     e.preventDefault(); // Prevent default form submission
     // Return if the input is empty or contains only whitespace
     if (!input.trim()) return;
+    if (!isChatConfigured) {
+      toast({
+        title: 'Chat unavailable',
+        description: 'AI chat is not configured in this deployment. Please set VITE_GROQ_API_KEY and redeploy.',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
 
     // Store the user's message
     const userMessage = input.trim();
@@ -87,11 +98,10 @@ export const AIChat = ({ riddle }: AIChatProps) => {
       // Add the AI's response to the messages state
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
-      // Log any errors during AI interaction and show an error toast
-      console.error('Error calling AI API:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get response from AI. Please try again.';
       toast({
         title: 'Error',
-        description: 'Failed to get response from AI. Please try again.',
+        description: errorMessage,
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -164,14 +174,14 @@ export const AIChat = ({ riddle }: AIChatProps) => {
           <Input
             value={input} // Bind input value to state
             onChange={(e) => setInput(e.target.value)} // Update state on input change
-            placeholder="Ask for help with the riddle..." // Placeholder text
             mr={2} // Margin to the right
-            disabled={isLoading} // Disable input while loading
+            disabled={isLoading || !isChatConfigured} // Disable input while loading
             bg={inputBg} // Dynamic background based on color mode
             color={inputColor} // Dynamic text color based on color mode
             _placeholder={{
               color: inputPlaceholderColor // Dynamic placeholder color based on color mode
             }}
+            placeholder={!isChatConfigured ? 'AI chat unavailable: missing deployment API key' : 'Ask for help with the riddle...'}
           />
           {/* Button to send message */}
           <Button
@@ -179,6 +189,7 @@ export const AIChat = ({ riddle }: AIChatProps) => {
             colorScheme="purple" // Button color scheme
             isLoading={isLoading} // Show loading spinner on button
             loadingText="Thinking..." // Text to show when loading
+            isDisabled={!isChatConfigured}
           >
             Send
           </Button>

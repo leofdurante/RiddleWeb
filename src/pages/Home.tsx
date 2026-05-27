@@ -1,7 +1,7 @@
 // src/pages/Home.tsx
 
 // Import necessary Chakra UI components
-import { Box, Heading, Text, Button, Stack, SimpleGrid, Icon, Container, Image, Spinner, Center, VStack, Flex, Badge, HStack, useColorModeValue, Input, IconButton } from '@chakra-ui/react';
+import { Box, Heading, Text, Button, Stack, SimpleGrid, Icon, Container, Image, Spinner, Center, VStack, Flex, Badge, HStack, useColorModeValue, Input } from '@chakra-ui/react';
 // Import Link component from react-router-dom for navigation
 import { Link as RouterLink } from 'react-router-dom';
 // Import icons from react-icons (assuming you have react-icons installed and set up)
